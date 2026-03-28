@@ -1,0 +1,1138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Terakawa Ramen</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1a1a1a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Terakawa">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+/* === CSS VARIABLES & RESET === */
+:root {
+  --charcoal: #1a1a1a;
+  --charcoal-light: #2a2a2a;
+  --charcoal-medium: #333;
+  --cream: #f5f0e8;
+  --cream-dim: #e8e0d4;
+  --red: #c41e3a;
+  --red-glow: #e8254580;
+  --gold: #d4a847;
+  --gold-dim: #b8923d;
+  --bone: #c8bfb0;
+  --font-display: 'Cormorant Garamond', serif;
+  --font-body: 'DM Sans', sans-serif;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+html, body {
+  height:100%; overflow:hidden;
+  background: var(--charcoal); color: var(--cream);
+  font-family: var(--font-body); font-weight: 300;
+  -webkit-font-smoothing: antialiased;
+  -webkit-user-select: none; user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+button { font-family: inherit; border: none; cursor: pointer; background: none; color: inherit; }
+a { color: inherit; text-decoration: none; }
+input { font-family: inherit; }
+
+/* === NOISE OVERLAY === */
+body::before {
+  content: ''; position: fixed; inset: 0; z-index: 9999; pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  background-size: 256px; opacity: 0.5;
+}
+
+/* === APP SHELL === */
+#app {
+  height: 100%; display: flex; flex-direction: column;
+  max-width: 480px; margin: 0 auto; position: relative;
+  overflow: hidden;
+}
+.page-container {
+  flex: 1; overflow-y: auto; overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+  padding-bottom: 80px;
+}
+.page-container::-webkit-scrollbar { display: none; }
+.page { display: none; min-height: 100%; }
+.page.active { display: block; animation: pageFadeIn 0.4s ease; }
+@keyframes pageFadeIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* === BOTTOM TAB BAR === */
+.tab-bar {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  height: 72px;
+  padding-bottom: var(--safe-bottom);
+  background: linear-gradient(180deg, rgba(26,26,26,0.92) 0%, #1a1a1a 40%);
+  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  display: flex; align-items: center; justify-content: space-around;
+  border-top: 1px solid rgba(245,240,232,0.06);
+  z-index: 100;
+}
+.tab-btn {
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  padding: 8px 12px; border-radius: 12px;
+  transition: all 0.3s ease; position: relative;
+  font-size: 10px; letter-spacing: 0.5px; text-transform: uppercase;
+  color: var(--bone); opacity: 0.5;
+}
+.tab-btn.active { opacity: 1; color: var(--gold); }
+.tab-btn .tab-icon { font-size: 22px; line-height: 1; }
+.tab-btn .cart-badge {
+  position: absolute; top: 2px; right: 4px;
+  background: var(--red); color: #fff;
+  font-size: 9px; font-weight: 600;
+  width: 16px; height: 16px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  transform: scale(0); transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+}
+.tab-btn .cart-badge.show { transform: scale(1); }
+
+/* === HOME PAGE === */
+.hero {
+  position: relative; height: 420px; overflow: hidden;
+}
+.hero-img {
+  width: 100%; height: 100%; object-fit: cover;
+  filter: brightness(0.45) saturate(1.1);
+}
+.hero-overlay {
+  position: absolute; inset: 0;
+  background: linear-gradient(180deg, transparent 30%, rgba(26,26,26,0.85) 70%, var(--charcoal) 100%);
+}
+.hero-content {
+  position: absolute; bottom: 40px; left: 24px; right: 24px;
+}
+.hero-logo {
+  width: 80px; height: 80px; border-radius: 16px;
+  object-fit: cover; border: 2px solid rgba(212,168,71,0.3);
+  margin-bottom: 16px;
+}
+.hero-title {
+  font-family: var(--font-display); font-weight: 300;
+  font-size: 38px; line-height: 1.1; letter-spacing: -0.5px;
+  margin-bottom: 8px;
+}
+.hero-title em { font-style: italic; color: var(--gold); }
+.hero-tagline {
+  font-family: var(--font-display); font-style: italic;
+  font-size: 16px; color: var(--bone); letter-spacing: 0.5px;
+}
+
+.home-section {
+  padding: 32px 24px;
+}
+.section-label {
+  font-size: 10px; text-transform: uppercase; letter-spacing: 3px;
+  color: var(--gold); margin-bottom: 16px;
+  display: flex; align-items: center; gap: 12px;
+}
+.section-label::after {
+  content: ''; flex: 1; height: 1px;
+  background: linear-gradient(90deg, var(--gold-dim), transparent);
+}
+.home-about p {
+  font-size: 14px; line-height: 1.8; color: var(--bone);
+  margin-bottom: 12px;
+}
+.home-about .highlight {
+  color: var(--cream); font-weight: 400;
+}
+.experience-steps {
+  display: flex; flex-direction: column; gap: 16px;
+  margin-top: 20px;
+}
+.exp-step {
+  display: flex; align-items: flex-start; gap: 16px;
+  padding: 16px; border-radius: 12px;
+  background: rgba(245,240,232,0.03);
+  border: 1px solid rgba(245,240,232,0.05);
+}
+.exp-num {
+  font-family: var(--font-display); font-size: 28px;
+  color: var(--gold); line-height: 1; min-width: 28px;
+}
+.exp-text { font-size: 13px; line-height: 1.6; color: var(--bone); }
+
+.home-cta {
+  display: flex; gap: 12px; margin-top: 24px;
+}
+.btn-primary, .btn-secondary {
+  flex: 1; padding: 14px 20px; border-radius: 10px;
+  font-size: 13px; font-weight: 500; text-align: center;
+  letter-spacing: 0.5px; transition: all 0.3s ease;
+}
+.btn-primary {
+  background: var(--red); color: #fff;
+}
+.btn-primary:active { transform: scale(0.97); }
+.btn-secondary {
+  background: transparent; color: var(--gold);
+  border: 1px solid rgba(212,168,71,0.3);
+}
+
+/* === MENU PAGE === */
+.menu-header {
+  padding: 24px 24px 0;
+}
+.menu-header h1 {
+  font-family: var(--font-display); font-size: 32px; font-weight: 300;
+  margin-bottom: 4px;
+}
+.menu-header p {
+  font-size: 12px; color: var(--bone); letter-spacing: 0.5px;
+}
+.category-pills {
+  display: flex; gap: 8px; padding: 20px 24px;
+  overflow-x: auto; -webkit-overflow-scrolling: touch;
+}
+.category-pills::-webkit-scrollbar { display: none; }
+.cat-pill {
+  white-space: nowrap; padding: 8px 16px;
+  border-radius: 20px; font-size: 12px; font-weight: 400;
+  background: rgba(245,240,232,0.05);
+  border: 1px solid rgba(245,240,232,0.08);
+  color: var(--bone); transition: all 0.3s ease;
+  flex-shrink: 0;
+}
+.cat-pill.active {
+  background: var(--red); border-color: var(--red);
+  color: #fff; font-weight: 500;
+}
+.menu-category {
+  padding: 0 24px 24px;
+}
+.menu-cat-title {
+  font-family: var(--font-display); font-size: 22px; font-weight: 400;
+  margin-bottom: 16px; color: var(--cream);
+  display: flex; align-items: center; gap: 10px;
+}
+.menu-cat-title .cat-emoji { font-size: 18px; }
+.menu-items { display: flex; flex-direction: column; gap: 10px; }
+.menu-item {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 16px; border-radius: 12px;
+  background: rgba(245,240,232,0.03);
+  border: 1px solid rgba(245,240,232,0.04);
+  transition: all 0.2s ease;
+}
+.menu-item.has-img {
+  flex-wrap: wrap; gap: 10px;
+}
+.menu-item:active { transform: scale(0.98); background: rgba(245,240,232,0.06); }
+.item-img {
+  width: 80px; height: 80px; border-radius: 10px; overflow: hidden; flex-shrink: 0;
+}
+.item-img img {
+  width: 100%; height: 100%; object-fit: cover;
+}
+.menu-item.has-img .item-info { flex: 1; min-width: 0; margin-right: 8px; }
+.menu-item.has-img .item-right { flex-shrink: 0; }
+.cat-jp { font-size: 14px; opacity: 0.5; font-weight: 300; margin-left: 6px; }
+.item-info { flex: 1; margin-right: 12px; }
+.item-name {
+  font-size: 14px; font-weight: 400; color: var(--cream);
+  margin-bottom: 2px;
+}
+.item-desc {
+  font-size: 11px; color: var(--bone); opacity: 0.7;
+  line-height: 1.4;
+}
+.item-right { display: flex; align-items: center; gap: 12px; }
+.item-price {
+  font-family: var(--font-display); font-size: 18px;
+  color: var(--gold); white-space: nowrap;
+}
+.add-btn {
+  width: 32px; height: 32px; border-radius: 8px;
+  background: rgba(196,30,58,0.15); color: var(--red);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; font-weight: 300;
+  transition: all 0.2s ease;
+  border: 1px solid rgba(196,30,58,0.2);
+}
+.add-btn:active { background: var(--red); color: #fff; transform: scale(0.9); }
+
+/* === CART PAGE === */
+.cart-header {
+  padding: 24px 24px 16px;
+}
+.cart-header h1 {
+  font-family: var(--font-display); font-size: 32px; font-weight: 300;
+}
+.cart-empty {
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; padding: 80px 40px; text-align: center;
+}
+.cart-empty-icon { font-size: 64px; margin-bottom: 20px; opacity: 0.3; }
+.cart-empty h3 {
+  font-family: var(--font-display); font-size: 22px; font-weight: 300;
+  margin-bottom: 8px;
+}
+.cart-empty p { font-size: 13px; color: var(--bone); }
+.cart-items { padding: 0 24px; }
+.cart-item {
+  display: flex; align-items: center; gap: 16px;
+  padding: 16px 0;
+  border-bottom: 1px solid rgba(245,240,232,0.06);
+}
+.cart-item-info { flex: 1; }
+.cart-item-name { font-size: 14px; font-weight: 400; margin-bottom: 2px; }
+.cart-item-price { font-family: var(--font-display); font-size: 16px; color: var(--gold); }
+.qty-controls {
+  display: flex; align-items: center; gap: 12px;
+}
+.qty-btn {
+  width: 28px; height: 28px; border-radius: 7px;
+  background: rgba(245,240,232,0.06);
+  border: 1px solid rgba(245,240,232,0.1);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; color: var(--cream);
+  transition: all 0.2s;
+}
+.qty-btn:active { background: var(--red); border-color: var(--red); }
+.qty-num { font-size: 15px; font-weight: 500; min-width: 20px; text-align: center; }
+.cart-summary {
+  padding: 24px; margin: 24px;
+  border-radius: 16px;
+  background: rgba(245,240,232,0.04);
+  border: 1px solid rgba(245,240,232,0.06);
+}
+.cart-row {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 12px; font-size: 14px; color: var(--bone);
+}
+.cart-row.total {
+  margin-top: 16px; padding-top: 16px; margin-bottom: 0;
+  border-top: 1px solid rgba(245,240,232,0.1);
+  font-size: 18px; color: var(--cream); font-weight: 500;
+}
+.cart-row.total .cart-val {
+  font-family: var(--font-display); font-size: 24px; color: var(--gold);
+}
+.cart-row .points-earn { color: var(--gold); font-size: 12px; }
+.checkout-btn {
+  display: block; width: calc(100% - 48px); margin: 20px 24px;
+  padding: 16px; border-radius: 12px;
+  background: var(--red); color: #fff;
+  font-size: 15px; font-weight: 500;
+  text-align: center; letter-spacing: 0.5px;
+  transition: all 0.3s;
+}
+.checkout-btn:active { transform: scale(0.97); opacity: 0.9; }
+
+/* === LOCATIONS PAGE === */
+.locations-header {
+  padding: 24px 24px 16px;
+}
+.locations-header h1 {
+  font-family: var(--font-display); font-size: 32px; font-weight: 300;
+  margin-bottom: 4px;
+}
+.locations-header p { font-size: 12px; color: var(--bone); }
+.location-cards { padding: 0 24px; display: flex; flex-direction: column; gap: 16px; }
+.loc-card {
+  padding: 20px; border-radius: 16px;
+  background: rgba(245,240,232,0.03);
+  border: 1px solid rgba(245,240,232,0.06);
+  transition: all 0.3s;
+}
+.loc-name {
+  font-family: var(--font-display); font-size: 20px; font-weight: 400;
+  margin-bottom: 12px; color: var(--cream);
+  display: flex; align-items: center; gap: 8px;
+}
+.loc-name .loc-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: #4ade80; flex-shrink: 0;
+}
+.loc-detail {
+  display: flex; align-items: flex-start; gap: 10px;
+  margin-bottom: 10px; font-size: 13px; color: var(--bone);
+  line-height: 1.5;
+}
+.loc-detail .loc-icon { font-size: 14px; margin-top: 2px; flex-shrink: 0; }
+.loc-hours {
+  margin-top: 12px; padding-top: 12px;
+  border-top: 1px solid rgba(245,240,232,0.06);
+}
+.loc-hours-row {
+  display: flex; justify-content: space-between;
+  font-size: 12px; color: var(--bone); margin-bottom: 4px;
+}
+.loc-hours-row .closed { color: var(--red); }
+.loc-call-btn {
+  display: block; width: 100%; margin-top: 14px;
+  padding: 10px; border-radius: 8px;
+  background: rgba(212,168,71,0.1);
+  border: 1px solid rgba(212,168,71,0.2);
+  color: var(--gold); font-size: 13px; font-weight: 500;
+  text-align: center;
+}
+.order-online-btn {
+  display: block; width: 100%; margin-top: 14px;
+  padding: 14px; border-radius: 10px;
+  background: var(--red); color: #fff;
+  font-size: 14px; font-weight: 500;
+  text-align: center; letter-spacing: 0.3px;
+  transition: all 0.2s ease;
+}
+.order-online-btn:active { transform: scale(0.97); opacity: 0.9; }
+
+/* === REWARDS PAGE === */
+.rewards-header { padding: 24px 24px 0; }
+.rewards-header h1 {
+  font-family: var(--font-display); font-size: 32px; font-weight: 300;
+}
+.rewards-signin {
+  padding: 40px 24px; text-align: center;
+}
+.signin-icon { font-size: 56px; margin-bottom: 16px; opacity: 0.4; }
+.rewards-signin h3 {
+  font-family: var(--font-display); font-size: 22px; font-weight: 300;
+  margin-bottom: 8px;
+}
+.rewards-signin p { font-size: 13px; color: var(--bone); margin-bottom: 24px; }
+.phone-input-wrap {
+  display: flex; gap: 10px; max-width: 300px; margin: 0 auto;
+}
+.phone-input {
+  flex: 1; padding: 12px 16px; border-radius: 10px;
+  background: rgba(245,240,232,0.06);
+  border: 1px solid rgba(245,240,232,0.1);
+  color: var(--cream); font-size: 15px;
+  outline: none;
+}
+.phone-input::placeholder { color: var(--bone); opacity: 0.4; }
+.phone-input:focus { border-color: var(--gold); }
+.signin-btn {
+  padding: 12px 24px; border-radius: 10px;
+  background: var(--gold); color: var(--charcoal);
+  font-size: 13px; font-weight: 600;
+}
+
+.rewards-dashboard { padding: 20px 24px; }
+.points-card {
+  padding: 28px 24px; border-radius: 20px;
+  background: linear-gradient(135deg, var(--charcoal-light) 0%, rgba(212,168,71,0.08) 100%);
+  border: 1px solid rgba(212,168,71,0.15);
+  text-align: center; position: relative; overflow: hidden;
+  margin-bottom: 24px;
+}
+.points-card::before {
+  content: ''; position: absolute; top: -40px; right: -40px;
+  width: 120px; height: 120px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(212,168,71,0.12), transparent 70%);
+}
+.tier-badge {
+  display: inline-block; padding: 4px 14px; border-radius: 20px;
+  font-size: 10px; text-transform: uppercase; letter-spacing: 2px;
+  font-weight: 600; margin-bottom: 16px;
+}
+.tier-bronze { background: rgba(205,127,50,0.2); color: #cd7f32; border: 1px solid rgba(205,127,50,0.3); }
+.tier-silver { background: rgba(192,192,192,0.2); color: #c0c0c0; border: 1px solid rgba(192,192,192,0.3); }
+.tier-gold { background: rgba(212,168,71,0.2); color: var(--gold); border: 1px solid rgba(212,168,71,0.3); }
+.tier-platinum { background: rgba(229,228,226,0.2); color: #e5e4e2; border: 1px solid rgba(229,228,226,0.3); }
+.points-number {
+  font-family: var(--font-display); font-size: 56px; font-weight: 300;
+  color: var(--cream); line-height: 1;
+}
+.points-label { font-size: 12px; color: var(--bone); margin-top: 4px; letter-spacing: 1px; }
+.tier-progress {
+  margin-top: 20px;
+}
+.progress-bar {
+  height: 4px; border-radius: 2px;
+  background: rgba(245,240,232,0.1);
+  overflow: hidden; margin-bottom: 6px;
+}
+.progress-fill {
+  height: 100%; border-radius: 2px;
+  background: linear-gradient(90deg, var(--gold), var(--red));
+  transition: width 0.8s cubic-bezier(0.22,1,0.36,1);
+}
+.progress-text {
+  font-size: 11px; color: var(--bone); text-align: right;
+}
+
+.rewards-section-title {
+  font-size: 10px; text-transform: uppercase; letter-spacing: 3px;
+  color: var(--gold); margin-bottom: 14px;
+  display: flex; align-items: center; gap: 12px;
+}
+.rewards-section-title::after {
+  content:''; flex:1; height:1px;
+  background: linear-gradient(90deg, var(--gold-dim), transparent);
+}
+.reward-cards { display: flex; flex-direction: column; gap: 10px; margin-bottom: 28px; }
+.reward-card {
+  display: flex; align-items: center; gap: 14px;
+  padding: 14px 16px; border-radius: 12px;
+  background: rgba(245,240,232,0.03);
+  border: 1px solid rgba(245,240,232,0.05);
+}
+.reward-icon { font-size: 28px; }
+.reward-info { flex: 1; }
+.reward-name { font-size: 14px; font-weight: 400; margin-bottom: 2px; }
+.reward-cost { font-size: 12px; color: var(--gold); }
+.redeem-btn {
+  padding: 8px 16px; border-radius: 8px;
+  font-size: 11px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.5px;
+  transition: all 0.2s;
+}
+.redeem-btn.can-redeem {
+  background: var(--red); color: #fff;
+}
+.redeem-btn.cannot-redeem {
+  background: rgba(245,240,232,0.06); color: var(--bone); opacity: 0.5;
+}
+.history-list { display: flex; flex-direction: column; gap: 8px; }
+.history-item {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 12px 14px; border-radius: 10px;
+  background: rgba(245,240,232,0.02);
+  border: 1px solid rgba(245,240,232,0.04);
+}
+.history-desc { font-size: 13px; }
+.history-date { font-size: 11px; color: var(--bone); opacity: 0.6; margin-top: 2px; }
+.history-pts { font-family: var(--font-display); font-size: 16px; }
+.history-pts.earned { color: #4ade80; }
+.history-pts.spent { color: var(--red); }
+.signout-btn {
+  display: block; width: 100%; margin-top: 24px;
+  padding: 12px; border-radius: 10px; text-align: center;
+  font-size: 13px; color: var(--bone); opacity: 0.6;
+  border: 1px solid rgba(245,240,232,0.06);
+}
+
+/* === TOAST === */
+.toast {
+  position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-100px);
+  padding: 12px 24px; border-radius: 12px;
+  background: var(--charcoal-light); color: var(--cream);
+  font-size: 13px; font-weight: 400;
+  border: 1px solid rgba(245,240,232,0.1);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  z-index: 1000; transition: transform 0.4s cubic-bezier(0.34,1.56,0.64,1);
+  max-width: 340px; text-align: center;
+}
+.toast.show { transform: translateX(-50%) translateY(0); }
+
+/* === CHECKOUT MODAL === */
+.modal-overlay {
+  position: fixed; inset: 0; z-index: 200;
+  background: rgba(0,0,0,0.7); backdrop-filter: blur(8px);
+  display: flex; align-items: flex-end; justify-content: center;
+  opacity: 0; pointer-events: none; transition: opacity 0.3s;
+}
+.modal-overlay.show { opacity: 1; pointer-events: auto; }
+.modal {
+  width: 100%; max-width: 480px;
+  background: var(--charcoal-light);
+  border-radius: 24px 24px 0 0;
+  padding: 32px 24px 40px;
+  transform: translateY(100%);
+  transition: transform 0.4s cubic-bezier(0.22,1,0.36,1);
+}
+.modal-overlay.show .modal { transform: translateY(0); }
+.modal-handle {
+  width: 36px; height: 4px; border-radius: 2px;
+  background: rgba(245,240,232,0.15);
+  margin: 0 auto 24px;
+}
+.modal h2 {
+  font-family: var(--font-display); font-size: 26px; font-weight: 300;
+  margin-bottom: 8px; text-align: center;
+}
+.modal p { font-size: 13px; color: var(--bone); text-align: center; margin-bottom: 24px; }
+.modal .confirm-btn {
+  display: block; width: 100%; padding: 16px; border-radius: 12px;
+  background: var(--gold); color: var(--charcoal);
+  font-size: 15px; font-weight: 600; text-align: center;
+  margin-bottom: 12px;
+}
+.modal .cancel-btn {
+  display: block; width: 100%; padding: 14px;
+  font-size: 14px; color: var(--bone); text-align: center;
+}
+
+/* === SCROLLBAR HIDE === */
+.page-container { scrollbar-width: none; }
+
+/* === PWA INSTALL BANNER === */
+.install-banner {
+  position: fixed; bottom: 80px; left: 12px; right: 12px;
+  max-width: 456px; margin: 0 auto;
+  padding: 16px 20px; border-radius: 16px;
+  background: linear-gradient(135deg, var(--charcoal-light), rgba(212,168,71,0.1));
+  border: 1px solid rgba(212,168,71,0.2);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  display: flex; align-items: center; gap: 14px;
+  z-index: 150;
+  transform: translateY(200px); opacity: 0;
+  transition: all 0.5s cubic-bezier(0.34,1.56,0.64,1);
+}
+.install-banner.show { transform: translateY(0); opacity: 1; }
+.install-banner-icon { font-size: 32px; flex-shrink: 0; }
+.install-banner-text { flex: 1; }
+.install-banner-title { font-size: 14px; font-weight: 500; margin-bottom: 2px; }
+.install-banner-desc { font-size: 11px; color: var(--bone); line-height: 1.4; }
+.install-banner-actions { display: flex; gap: 8px; flex-shrink: 0; }
+.install-btn {
+  padding: 8px 16px; border-radius: 8px;
+  font-size: 12px; font-weight: 600;
+  background: var(--gold); color: var(--charcoal);
+}
+.install-dismiss {
+  padding: 8px 10px; border-radius: 8px;
+  font-size: 12px; color: var(--bone);
+}
+</style>
+</head>
+<body>
+
+<div id="app">
+  <div class="page-container">
+    <!-- HOME PAGE -->
+    <div id="page-home" class="page active">
+      <div class="hero">
+        <img class="hero-img" src="https://terakawaramen.com/wp-content/uploads/2021/09/homeimage1.jpg" alt="Terakawa Ramen">
+        <div class="hero-overlay"></div>
+        <div class="hero-content">
+          <img class="hero-logo" src="images/logo.jpg" alt="Logo">
+          <h1 class="hero-title">Terakawa <em>Ramen</em></h1>
+          <p class="hero-tagline">A true passion behind each bowl</p>
+        </div>
+      </div>
+      <div class="home-section home-about">
+        <div class="section-label">Our Craft</div>
+        <p>Our chef's recipes originate from the <span class="highlight">Kumamoto region of Japan</span>. The broth is simmered for a period of <span class="highlight">2 days</span>, extracting deep, complex flavors from Natural Heritage Berkshire pork bones.</p>
+        <p>We offer two styles of fresh handmade noodles — thick wavy egg noodles for traditional ramen, and thin straight Kyushu-style noodles — both cooked al dente.</p>
+        <div class="home-cta">
+          <button class="btn-primary" onclick="switchPage('menu')">View Menu</button>
+          <button class="btn-secondary" onclick="switchPage('locations')">Find Us</button>
+        </div>
+      </div>
+      <div class="home-section">
+        <div class="section-label">The Experience</div>
+        <div class="experience-steps">
+          <div class="exp-step"><span class="exp-num">1</span><span class="exp-text">Taste the broth — savor the depth of 48 hours of simmering.</span></div>
+          <div class="exp-step"><span class="exp-num">2</span><span class="exp-text">Taste the noodles — appreciate the handmade texture and al dente bite.</span></div>
+          <div class="exp-step"><span class="exp-num">3</span><span class="exp-text">Experience the harmony of flavors and textures together.</span></div>
+          <div class="exp-step"><span class="exp-num">4</span><span class="exp-text">Season with table spices — a Kumamoto specialty tradition.</span></div>
+          <div class="exp-step"><span class="exp-num">5</span><span class="exp-text">Watch the flavor of your broth evolve throughout the meal.</span></div>
+        </div>
+      </div>
+    </div>
+    <!-- MENU PAGE -->
+    <div id="page-menu" class="page">
+      <div class="menu-header">
+        <h1>Menu</h1>
+      </div>
+      <div class="category-pills" id="categoryPills"></div>
+      <div id="menuContent"></div>
+    </div>
+    <!-- CART PAGE -->
+    <div id="page-cart" class="page">
+      <div class="cart-header"><h1>Your Order</h1></div>
+      <div id="cartContent"></div>
+    </div>
+    <!-- LOCATIONS PAGE -->
+    <div id="page-locations" class="page">
+      <div class="locations-header">
+        <h1>Find Us</h1>
+        <p>Three locations in the Philadelphia area</p>
+      </div>
+      <div class="location-cards">
+        <div class="loc-card">
+          <div class="loc-name"><span class="loc-dot"></span>Chinatown</div>
+          <div class="loc-detail"><span class="loc-icon">📍</span><span>204 North 9th Street<br>Philadelphia, PA 19107</span></div>
+          <div class="loc-detail"><span class="loc-icon">📞</span><span>(267) 687-1355</span></div>
+          <div class="loc-hours">
+            <div class="loc-hours-row"><span>Monday</span><span class="closed">Closed</span></div>
+            <div class="loc-hours-row"><span>Sun — Thu</span><span>11:30 AM – 9:45 PM</span></div>
+            <div class="loc-hours-row"><span>Fri — Sat</span><span>11:30 AM – 10:45 PM</span></div>
+          </div>
+          <a class="loc-call-btn" href="tel:2676871355">Call to Reserve</a>
+        </div>
+        <div class="loc-card">
+          <div class="loc-name"><span class="loc-dot"></span>University City</div>
+          <div class="loc-detail"><span class="loc-icon">📍</span><span>125 South 40th Street<br>Philadelphia, PA 19104</span></div>
+          <div class="loc-detail"><span class="loc-icon">📞</span><span>(215) 516-6818</span></div>
+          <div class="loc-hours">
+            <div class="loc-hours-row"><span>Monday</span><span class="closed">Closed</span></div>
+            <div class="loc-hours-row"><span>Sun — Thu</span><span>11:30 AM – 9:30 PM</span></div>
+            <div class="loc-hours-row"><span>Fri — Sat</span><span>11:30 AM – 10:30 PM</span></div>
+          </div>
+          <a class="loc-call-btn" href="tel:2155166818">Call to Reserve</a>
+        </div>
+        <div class="loc-card">
+          <div class="loc-name"><span class="loc-dot"></span>Princeton Junction</div>
+          <div class="loc-detail"><span class="loc-icon">📍</span><span>64 Princeton Hightstown Rd<br>Princeton Junction, NJ 08550</span></div>
+          <div class="loc-detail"><span class="loc-icon">📞</span><span>(609) 799-6688</span></div>
+          <div class="loc-hours">
+            <div class="loc-hours-row"><span>Monday</span><span class="closed">Closed</span></div>
+            <div class="loc-hours-row"><span>Sun — Thu</span><span>11:30 AM – 9:30 PM</span></div>
+            <div class="loc-hours-row"><span>Fri — Sat</span><span>11:30 AM – 10:00 PM</span></div>
+          </div>
+          <a class="loc-call-btn" href="tel:6097996688">Call to Reserve</a>
+        </div>
+      </div>
+    </div>
+    <!-- REWARDS PAGE -->
+    <div id="page-rewards" class="page">
+      <div class="rewards-header"><h1>Rewards</h1></div>
+      <div id="rewardsContent"></div>
+    </div>
+    <!-- DELIVERY & PICKUP PAGE -->
+    <div id="page-order" class="page">
+      <div class="locations-header">
+        <h1>Delivery & Pickup</h1>
+        <p>Order online from our Philadelphia locations</p>
+      </div>
+      <div class="location-cards">
+        <div class="loc-card">
+          <div class="loc-name"><span class="loc-dot"></span>Chinatown</div>
+          <div class="loc-detail"><span class="loc-icon">📍</span><span>204 North 9th Street<br>Philadelphia, PA 19107</span></div>
+          <a class="order-online-btn" href="https://order.online/store/terakawa-ramen-philadelphia-216073/?hideModal=true&pickup=true" target="_blank" rel="noopener">Order Online (Chinatown)</a>
+        </div>
+        <div class="loc-card">
+          <div class="loc-name"><span class="loc-dot"></span>University City</div>
+          <div class="loc-detail"><span class="loc-icon">📍</span><span>125 South 40th Street<br>Philadelphia, PA 19104</span></div>
+          <a class="order-online-btn" href="https://order.online/store/terakawa-ramen-philadelphia-398945/?hideModal=true&pickup=true" target="_blank" rel="noopener">Order Online (U City)</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB BAR -->
+  <nav class="tab-bar">
+    <button class="tab-btn active" data-page="home">
+      <span class="tab-icon">🏠</span>Home
+    </button>
+    <button class="tab-btn" data-page="menu">
+      <span class="tab-icon">🍜</span>Menu
+    </button>
+    <button class="tab-btn" data-page="locations">
+      <span class="tab-icon">📍</span>Find Us
+    </button>
+    <button class="tab-btn" data-page="order">
+      <span class="tab-icon">🛵</span>Order
+    </button>
+  </nav>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<div class="install-banner" id="installBanner">
+  <div class="install-banner-icon">🍜</div>
+  <div class="install-banner-text">
+    <div class="install-banner-title">Install Terakawa Ramen</div>
+    <div class="install-banner-desc">Add to home screen for quick access & offline use</div>
+  </div>
+  <div class="install-banner-actions">
+    <button class="install-dismiss" onclick="dismissInstall()">Later</button>
+    <button class="install-btn" onclick="doInstall()">Install</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="checkoutModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h2>Order Placed!</h2>
+    <p id="checkoutMsg">Your order has been placed successfully.</p>
+    <button class="confirm-btn" onclick="closeCheckout()">Done</button>
+  </div>
+</div>
+
+<script>
+// ==================== DATA ====================
+const MENU_DATA = [
+  { cat: 'Appetizers', catJp: '前菜', emoji: '🥟', items: [
+    { name: 'Seaweed Salad', desc: 'Marinated seaweed tossed with roasted sesame seed and sesame oil', price: 5.75, img: 'images/seaweed-salad.jpg' },
+    { name: 'Edamame', desc: 'Blanched soybean tossed with Japanese sea salt', price: 5.75, img: 'images/edamame.jpg' },
+    { name: 'Croquette', desc: 'Lightly breaded danshaku potato croquette served with tonkatsu sauce', price: 4.25, img: 'images/croquette.jpg' },
+    { name: 'Gyoza (5 pcs)', desc: 'Pork and vegetable dumpling with house special sauce (pan-fried or steamed)', price: 6.25, img: 'images/gyoza.jpg' },
+    { name: 'Charshu Onigiri', desc: 'Roast pork rice ball seasoned with sesame seed wrapped in nori, with spicy mayo', price: 4.25, img: 'images/charshu-onigiri.jpg' },
+    { name: 'Japanese Sausage', desc: 'Natural Heritage Berkshire pork sausage pan-fried served with spicy mayonnaise', price: 7.25, img: 'images/japanese-sausage.jpg' },
+    { name: 'Karaage Chicken', desc: 'Lightly battered boneless chicken marinated with fresh ginger juice, served with spicy mayonnaise', price: 7.25, img: 'images/karaage-chicken.jpg' },
+    { name: 'Tempura Shumai', desc: 'Crispy tempura battered shrimp shumai topped with lightly spiced bean paste sauce', price: 7.25, img: 'images/tempura-shumai.jpg' },
+    { name: 'Takoyaki (6 pcs)', desc: 'Japanese mountain-potato encrusted octopus topped with bonito flakes, Japanese mayo and barbecue sauce', price: 7.25, img: 'images/takoyaki.jpg' },
+    { name: 'Chicken Bun', desc: 'Pan-seared chicken topped with lettuce, tomato, cucumber and spicy mayo in a soft or crispy bun', price: 9.25, img: 'images/chicken-bun.jpg' },
+    { name: 'Pork Bun', desc: 'Slow roasted pork topped with lettuce, tomato, cucumber and spicy mayo in a soft or crispy bun', price: 9.25, img: 'images/pork-bun.jpg' },
+  ]},
+  { cat: 'Ramen', catJp: 'ラーメン', emoji: '🍜', items: [
+    { name: 'Terakawa ★', desc: 'Signature — Natural Heritage Berkshire Pork-bone soup (Tonkotsu) with thin straight noodle, roast pork charshu, bamboo shoot, kikurage mushroom, red ginger, scallion and seasoned boiled egg', price: 15.50, img: 'images/terakawa-ramen.jpg' },
+    { name: 'Mayu', desc: 'Tonkotsu with mayu oil (dark roasted leek with garlic oil) with thin straight noodle, roast pork charshu, bamboo shoot, kikurage mushroom, red ginger, scallion and seasoned boiled egg', price: 16.50, img: 'images/mayu-ramen.jpg' },
+    { name: 'Miso', desc: 'Pork and chicken broth with miso paste and wavy egg noodle topped with roast pork charshu, bamboo shoot, kikurage mushroom, bean sprout, sesame seed, scallion and seasoned boiled egg', price: 15.50, img: 'images/miso-ramen.jpg' },
+    { name: 'Shoyu', desc: 'Light soy sauce and chicken broth with wavy egg noodle topped with roast pork charshu or chicken, bamboo shoot, fish cake (naruto), scallion and seasoned boiled egg', price: 15.50, img: 'images/shoyu-ramen.jpg' },
+    { name: 'Tan Tan', desc: 'Mild spicy miso and chicken broth with sesame paste and wavy egg noodle topped with minced pork or minced chicken, bean sprout and scallion', price: 15.50, img: 'images/tan-tan-ramen.jpg' },
+    { name: 'Kyushu Danji', desc: 'Tonkotsu with mayu oil and dark-roasted leek with garlic oil with medium thick noodle topped with roast pork charshu, bamboo shoot, kikurage mushroom, cabbage, bean sprout, red ginger, scallion and seasoned boiled egg', price: 21.50, img: 'images/kyushu-danji.jpg' },
+  ]},
+  { cat: 'Specialty Ramen', catJp: '特製ラーメン', emoji: '🌟', items: [
+    { name: 'Charshu Men', desc: 'Tonkotsu with thin straight noodle topped with roast pork charshu, red ginger, and scallion', price: 16.50, img: 'images/charshu-men.jpg' },
+    { name: 'Spicy Ramen', desc: 'Pork, chicken and seafood broth with wavy egg noodle topped with roast pork charshu, kimchee, kikurage mushroom, bean sprout, scallion and seasoned boiled egg', price: 16.50, img: 'images/spicy-ramen.jpg' },
+    { name: 'Veggie Ramen', desc: 'Vegetable broth (Shoyu or Miso base) with wavy egg noodle topped with cabbage, carrot, seasonal veggie, bamboo shoot, corn, kikurage mushroom, bean sprout, scallion, sesame seed and seasoned boiled egg', price: 16.50, img: 'images/veggie-ramen.jpg' },
+    { name: 'Bibim Noodle', desc: 'Cold or warm wavy egg noodle tossed in spiced bean paste sauce topped with chicken, kimchee, kikurage mushroom, corn, cucumber, sesame seed and seasoned boiled egg', price: 16.50, img: 'images/bibim-noodle.jpg' },
+    { name: 'Hiyashi Chyuka', desc: 'Cold wavy egg noodle tossed in citrus sauce topped with roast pork charshu or chicken, cucumber, tomato, kikurage mushroom, bamboo shoot, red ginger and egg omelette', price: 16.50, img: 'images/hiyashi-chyuka.jpg' },
+  ]},
+  { cat: 'Udon', catJp: 'うどん', emoji: '🍲', items: [
+    { name: 'Shrimp Tempura Udon', desc: 'Lightly battered shrimp tempura, poached egg, seasonal veggie, fish cake (kamaboko) and scallion', price: 15.50, img: 'images/shrimp-tempura-udon.jpg' },
+    { name: 'Karaage Curry Udon', desc: 'Karaage chicken served with Japanese curry, seasonal veggie, fish cake (kamaboko) and scallion', price: 15.50, img: 'images/karaage-curry-udon.jpg' },
+    { name: 'Beef Udon', desc: 'Marinated sliced beef, caramelized onion, seasonal veggie, fish cake (kamaboko) and scallion', price: 16.50, img: 'images/beef-udon.jpg' },
+    { name: 'Charshu Udon', desc: 'Japanese roast pork, seasonal veggie, fish cake (kamaboko) and scallion', price: 15.50, img: 'images/charshu-udon.jpg' },
+  ]},
+  { cat: 'Curry Platter', catJp: 'カレー', emoji: '🍛', items: [
+    { name: 'Karaage Chicken Curry', desc: 'Lightly battered boneless chicken marinated with fresh ginger juice, served with rice and salad with ginger dressing', price: 15.50, img: 'images/karaage-chicken-curry.jpg' },
+    { name: 'Pork Cutlet Curry', desc: 'Lightly breaded pork cutlet served with rice and salad with ginger dressing', price: 15.50, img: 'images/pork-cutlet-curry.jpg' },
+    { name: 'Chicken Cutlet Curry', desc: 'Lightly breaded chicken cutlet served with rice and salad with ginger dressing', price: 15.50, img: 'images/chicken-cutlet-curry.jpg' },
+  ]},
+  { cat: 'Donburi', catJp: '丼物', emoji: '🍚', items: [
+    { name: 'Katsu Don', desc: 'Lightly breaded chicken or pork cutlet, egg, caramelized onion and scallion served over rice with sweet dashi sauce', price: 15.50, img: 'images/katsu-don.jpg' },
+    { name: 'Gyu Don', desc: 'Marinated sliced beef, caramelized onion, pickled ginger and seasoned boiled egg served over rice with sweet dashi sauce', price: 16.50, img: 'images/gyu-don.jpg' },
+    { name: 'Charshu Don', desc: 'Japanese roast pork belly (charshu), pickled radish and scallion served over rice with sweet dashi sauce', price: 15.50, img: 'images/charshu-don.jpg' },
+  ]},
+  { cat: 'Beverages', catJp: '飲物', emoji: '🍵', items: [
+    { name: 'Coke / Diet Coke / Sprite / Ginger Ale', desc: '', price: 3 },
+    { name: 'Ramune Soda', desc: 'Original flavor', price: 3.5 },
+    { name: 'Calpico', desc: 'Original, Mango, or Lychee', price: 4 },
+    { name: 'Iced Oolong Tea', desc: '', price: 3.5 },
+    { name: 'Iced Green Tea', desc: '', price: 3.5 },
+    { name: 'Iced Jasmine Tea', desc: '', price: 3.5 },
+    { name: 'Hot Green Tea', desc: '', price: 2 },
+    { name: 'Orange Juice', desc: '', price: 3.5 },
+    { name: 'Fiji Water', desc: '', price: 3.5 },
+    { name: 'San Pellegrino Sparkling Water', desc: '', price: 3.5 },
+  ]},
+  { cat: 'Dessert', catJp: 'デザート', emoji: '🍡', items: [
+    { name: 'Mochi Ice Cream (2 pcs)', desc: 'Green Tea, Red Bean, Mango, Strawberry or Vanilla Flavor', price: 6 },
+  ]},
+];
+
+const TIERS = [
+  { name: 'Bronze', min: 0, max: 99, cls: 'tier-bronze' },
+  { name: 'Silver', min: 100, max: 299, cls: 'tier-silver' },
+  { name: 'Gold', min: 300, max: 599, cls: 'tier-gold' },
+  { name: 'Platinum', min: 600, max: Infinity, cls: 'tier-platinum' },
+];
+
+const REWARDS = [
+  { name: 'Free Appetizer', cost: 50, icon: '🥟' },
+  { name: 'Free Ramen', cost: 100, icon: '🍜' },
+  { name: 'Free Combo Meal', cost: 150, icon: '🎉' },
+];
+
+// ==================== STATE ====================
+let cart = JSON.parse(localStorage.getItem('tk_cart') || '[]');
+let rewardsUser = JSON.parse(localStorage.getItem('tk_rewards') || 'null');
+let activeCat = 0;
+
+function saveCart() { localStorage.setItem('tk_cart', JSON.stringify(cart)); }
+function saveRewards() { localStorage.setItem('tk_rewards', JSON.stringify(rewardsUser)); }
+
+// ==================== NAVIGATION ====================
+function switchPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector(`.tab-btn[data-page="${name}"]`).classList.add('active');
+  document.querySelector('.page-container').scrollTop = 0;
+  if (name === 'cart') renderCart();
+  if (name === 'rewards') renderRewards();
+}
+
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => switchPage(btn.dataset.page));
+});
+
+// ==================== TOAST ====================
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+// ==================== BADGE ====================
+function updateBadge() {
+  const total = cart.reduce((s, i) => s + i.qty, 0);
+  const badge = document.getElementById('cartBadge');
+  if (badge) {
+    badge.textContent = total;
+    badge.classList.toggle('show', total > 0);
+  }
+}
+
+// ==================== MENU RENDER ====================
+function renderMenu() {
+  const pills = document.getElementById('categoryPills');
+  pills.innerHTML = MENU_DATA.map((c, i) =>
+    `<button class="cat-pill${i===activeCat?' active':''}" onclick="scrollToCat(${i})">${c.emoji} ${c.cat}</button>`
+  ).join('');
+
+  const content = document.getElementById('menuContent');
+  content.innerHTML = MENU_DATA.map((c, ci) =>
+    `<div class="menu-category" id="menuCat${ci}">
+      <div class="menu-cat-title"><span class="cat-emoji">${c.emoji}</span>${c.cat}${c.catJp ? ` <span class="cat-jp">${c.catJp}</span>` : ''}</div>
+      <div class="menu-items">${c.items.map((item, ii) =>
+        `<div class="menu-item${item.img ? ' has-img' : ''}">
+          ${item.img ? `<div class="item-img"><img src="${item.img}" alt="${item.name}" loading="lazy"></div>` : ''}
+          <div class="item-info">
+            <div class="item-name">${item.name}</div>
+            ${item.desc ? `<div class="item-desc">${item.desc}</div>` : ''}
+          </div>
+          <div class="item-right">
+            <span class="item-price">$${item.price % 1 === 0 ? item.price : item.price.toFixed(2)}</span>
+          </div>
+        </div>`
+      ).join('')}</div>
+    </div>`
+  ).join('');
+}
+
+function scrollToCat(idx) {
+  activeCat = idx;
+  document.querySelectorAll('.cat-pill').forEach((p,i) => p.classList.toggle('active', i===idx));
+  document.getElementById('menuCat'+idx).scrollIntoView({ behavior:'smooth', block:'start' });
+}
+
+function addToCart(ci, ii) {
+  const item = MENU_DATA[ci].items[ii];
+  const existing = cart.find(c => c.name === item.name);
+  if (existing) { existing.qty++; }
+  else { cart.push({ name: item.name, price: item.price, qty: 1 }); }
+  saveCart(); updateBadge();
+  showToast(`${item.name} added`);
+}
+
+// ==================== CART RENDER ====================
+function renderCart() {
+  const el = document.getElementById('cartContent');
+  if (cart.length === 0) {
+    el.innerHTML = `<div class="cart-empty">
+      <div class="cart-empty-icon">🍜</div>
+      <h3>Your cart is empty</h3>
+      <p>Browse the menu to add items</p>
+      <button class="btn-primary" style="margin-top:20px;padding:12px 32px;border-radius:10px" onclick="switchPage('menu')">View Menu</button>
+    </div>`;
+    return;
+  }
+  const subtotal = cart.reduce((s, i) => s + i.price * i.qty, 0);
+  const tax = subtotal * 0.08;
+  const total = subtotal + tax;
+  const pts = Math.floor(total);
+
+  el.innerHTML = `
+    <div class="cart-items">${cart.map((item, i) =>
+      `<div class="cart-item">
+        <div class="cart-item-info">
+          <div class="cart-item-name">${item.name}</div>
+          <div class="cart-item-price">$${(item.price * item.qty).toFixed(2)}</div>
+        </div>
+        <div class="qty-controls">
+          <button class="qty-btn" onclick="changeQty(${i},-1)">−</button>
+          <span class="qty-num">${item.qty}</span>
+          <button class="qty-btn" onclick="changeQty(${i},1)">+</button>
+        </div>
+      </div>`
+    ).join('')}</div>
+    <div class="cart-summary">
+      <div class="cart-row"><span>Subtotal</span><span>$${subtotal.toFixed(2)}</span></div>
+      <div class="cart-row"><span>Tax (8%)</span><span>$${tax.toFixed(2)}</span></div>
+      ${rewardsUser ? `<div class="cart-row"><span>Points you'll earn</span><span class="points-earn">+${pts} pts</span></div>` : ''}
+      <div class="cart-row total"><span>Total</span><span class="cart-val">$${total.toFixed(2)}</span></div>
+    </div>
+    <button class="checkout-btn" onclick="doCheckout()">Place Order — $${total.toFixed(2)}</button>
+  `;
+}
+
+function changeQty(idx, delta) {
+  cart[idx].qty += delta;
+  if (cart[idx].qty <= 0) cart.splice(idx, 1);
+  saveCart(); updateBadge(); renderCart();
+}
+
+function doCheckout() {
+  const total = cart.reduce((s, i) => s + i.price * i.qty, 0) * 1.08;
+  const pts = Math.floor(total);
+  if (rewardsUser) {
+    rewardsUser.points += pts;
+    rewardsUser.history.unshift({ desc: 'Order earned', pts: '+' + pts, date: new Date().toLocaleDateString() });
+    saveRewards();
+  }
+  const modal = document.getElementById('checkoutModal');
+  const msg = rewardsUser
+    ? `You earned <strong>${pts} points</strong>! Your new balance is <strong>${rewardsUser.points} pts</strong>.`
+    : 'Your order has been placed. Sign up for rewards to earn points!';
+  document.getElementById('checkoutMsg').innerHTML = msg;
+  modal.classList.add('show');
+  cart = []; saveCart(); updateBadge();
+}
+
+function closeCheckout() {
+  document.getElementById('checkoutModal').classList.remove('show');
+  renderCart();
+}
+document.getElementById('checkoutModal').addEventListener('click', function(e) {
+  if (e.target === this) closeCheckout();
+});
+
+// ==================== REWARDS RENDER ====================
+function renderRewards() {
+  const el = document.getElementById('rewardsContent');
+  if (!rewardsUser) {
+    el.innerHTML = `<div class="rewards-signin">
+      <div class="signin-icon">⭐</div>
+      <h3>Join Terakawa Rewards</h3>
+      <p>Earn 1 point per $1 spent. Redeem for free appetizers, ramen & more.</p>
+      <div class="phone-input-wrap">
+        <input class="phone-input" id="phoneInput" type="tel" placeholder="Phone number" maxlength="14">
+        <button class="signin-btn" onclick="signIn()">Join</button>
+      </div>
+    </div>`;
+    return;
+  }
+
+  const pts = rewardsUser.points;
+  const tier = TIERS.find(t => pts >= t.min && pts <= t.max) || TIERS[0];
+  const nextTier = TIERS[TIERS.indexOf(tier) + 1];
+  const progress = nextTier ? ((pts - tier.min) / (nextTier.min - tier.min)) * 100 : 100;
+
+  el.innerHTML = `<div class="rewards-dashboard">
+    <div class="points-card">
+      <div class="tier-badge ${tier.cls}">${tier.name}</div>
+      <div class="points-number">${pts}</div>
+      <div class="points-label">Points</div>
+      ${nextTier ? `<div class="tier-progress">
+        <div class="progress-bar"><div class="progress-fill" style="width:${progress}%"></div></div>
+        <div class="progress-text">${nextTier.min - pts} pts to ${nextTier.name}</div>
+      </div>` : `<div class="progress-text" style="margin-top:12px;text-align:center">You've reached the highest tier!</div>`}
+    </div>
+
+    <div class="rewards-section-title">Redeem Rewards</div>
+    <div class="reward-cards">${REWARDS.map(r => {
+      const canRedeem = pts >= r.cost;
+      return `<div class="reward-card">
+        <div class="reward-icon">${r.icon}</div>
+        <div class="reward-info">
+          <div class="reward-name">${r.name}</div>
+          <div class="reward-cost">${r.cost} points</div>
+        </div>
+        <button class="redeem-btn ${canRedeem ? 'can-redeem' : 'cannot-redeem'}"
+          ${canRedeem ? `onclick="redeemReward('${r.name}',${r.cost})"` : 'disabled'}>
+          ${canRedeem ? 'Redeem' : 'Locked'}
+        </button>
+      </div>`;
+    }).join('')}</div>
+
+    <div class="rewards-section-title">History</div>
+    <div class="history-list">
+      ${rewardsUser.history.length === 0 ? '<p style="font-size:13px;color:var(--bone);opacity:0.5">No activity yet. Place an order to start earning!</p>' :
+        rewardsUser.history.map(h => `<div class="history-item">
+          <div><div class="history-desc">${h.desc}</div><div class="history-date">${h.date}</div></div>
+          <div class="history-pts ${h.pts.startsWith('+') ? 'earned' : 'spent'}">${h.pts}</div>
+        </div>`).join('')
+      }
+    </div>
+    <button class="signout-btn" onclick="signOut()">Sign Out</button>
+  </div>`;
+}
+
+function signIn() {
+  const phone = document.getElementById('phoneInput').value.trim();
+  if (phone.length < 7) { showToast('Please enter a valid phone number'); return; }
+  rewardsUser = { phone, points: 0, history: [] };
+  saveRewards(); renderRewards();
+  showToast('Welcome to Terakawa Rewards!');
+}
+
+function signOut() {
+  rewardsUser = null;
+  localStorage.removeItem('tk_rewards');
+  renderRewards();
+}
+
+function redeemReward(name, cost) {
+  if (rewardsUser.points < cost) return;
+  rewardsUser.points -= cost;
+  rewardsUser.history.unshift({ desc: 'Redeemed: ' + name, pts: '-' + cost, date: new Date().toLocaleDateString() });
+  saveRewards(); renderRewards();
+  showToast(`Redeemed: ${name}`);
+}
+
+// ==================== INIT ====================
+renderMenu();
+updateBadge();
+
+// Disable long-press context menu (Site Settings popup)
+document.addEventListener('contextmenu', e => e.preventDefault());
+
+// ==================== PWA ====================
+// Register Service Worker
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js')
+      .then(reg => console.log('SW registered:', reg.scope))
+      .catch(err => console.log('SW registration failed:', err));
+  });
+}
+
+// Install Prompt
+let deferredPrompt = null;
+const installBanner = document.getElementById('installBanner');
+
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  // Show banner after a short delay if not previously dismissed
+  if (!localStorage.getItem('tk_install_dismissed')) {
+    setTimeout(() => installBanner.classList.add('show'), 3000);
+  }
+});
+
+function doInstall() {
+  if (!deferredPrompt) return;
+  installBanner.classList.remove('show');
+  deferredPrompt.prompt();
+  deferredPrompt.userChoice.then(choice => {
+    if (choice.outcome === 'accepted') {
+      showToast('App installed! Find it on your home screen.');
+    }
+    deferredPrompt = null;
+  });
+}
+
+function dismissInstall() {
+  installBanner.classList.remove('show');
+  localStorage.setItem('tk_install_dismissed', Date.now());
+}
+
+// Detect if running as installed PWA
+if (window.matchMedia('(display-mode: standalone)').matches || navigator.standalone) {
+  document.body.classList.add('pwa-standalone');
+}
+
+// Show update toast when new SW available
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    showToast('App updated! Refresh for the latest version.');
+  });
+}
+</script>
+</body>
+</html>
